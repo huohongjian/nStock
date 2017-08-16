@@ -1,6 +1,7 @@
-/*
-DROP TABLE IF EXISTS data_hist;
-CREATE TABLE data_hist
+
+
+DROP TABLE IF EXISTS ts_hist_data;
+CREATE TABLE ts_hist_data
 (
     id   serial PRIMARY KEY,
     date date,
@@ -18,22 +19,22 @@ CREATE TABLE data_hist
     v_ma5 double precision,
     v_ma10 double precision,
     v_ma20 double precision,
-    turnover double precision，
+    turnover double precision,
     qfq double precision,
     hfq double precision,
     ispeak boolean,
     isbott boolean
 ) WITH (OIDS=FALSE);
-ALTER TABLE data_hist OWNER TO hhj;
-CREATE INDEX ix_data_hist_code ON data_hist USING btree (code);
-CREATE INDEX ix_data_hist_date ON data_hist USING btree (date);
-CREATE INDEX ix_data_hist_hfq ON data_hist USING btree (hfq);
-CREATE INDEX ix_data_hist_qfq ON data_hist USING btree (qfq);
-CREATE INDEX ix_data_hist_ispeak ON data_hist USING btree (ispeak);
-CREATE INDEX ix_data_hist_isbott ON data_hist USING btree (isbott);
-*/
+-- ALTER TABLE ts_hist_data OWNER TO hhj;
+CREATE INDEX ix_data_hist_code ON ts_hist_data USING btree (code);
+CREATE INDEX ix_data_hist_date ON ts_hist_data USING btree (date);
+CREATE INDEX ix_data_hist_hfq ON ts_hist_data USING btree (hfq);
+CREATE INDEX ix_data_hist_qfq ON ts_hist_data USING btree (qfq);
+CREATE INDEX ix_data_hist_ispeak ON ts_hist_data USING btree (ispeak);
+CREATE INDEX ix_data_hist_isbott ON ts_hist_data USING btree (isbott);
 
---delete from data_hist where date='2015-02-24';
+
+--delete from ts_hist_data where date='2015-02-24';
 
 ----------------------------------------------------------------
 /*
@@ -92,21 +93,21 @@ CREATE TABLE stock_list (
     industry text,
     concept text,
     area    text,
-    al boolean NOT NULL DEFAULT true,
-    sh boolean NOT NULL DEFAULT false,
-    sz boolean NOT NULL DEFAULT false,
-    st boolean NOT NULL DEFAULT false,
-    zxb boolean NOT NULL DEFAULT false,
-    cyb boolean NOT NULL DEFAULT false,
-    hssb boolean NOT NULL DEFAULT false,
-    szwl boolean NOT NULL DEFAULT false,
+    al    boolean NOT NULL DEFAULT true,
+    sh    boolean NOT NULL DEFAULT false,
+    sz    boolean NOT NULL DEFAULT false,
+    st    boolean NOT NULL DEFAULT false,
+    zxb   boolean NOT NULL DEFAULT false,
+    cyb   boolean NOT NULL DEFAULT false,
+    hssb  boolean NOT NULL DEFAULT false,
+    szwl  boolean NOT NULL DEFAULT false,
     tradable boolean NOT NULL DEFAULT false,
-    hold boolean NOT NULL DEFAULT false,
-    jjcg boolean NOT NULL DEFAULT false,
-    yxg boolean NOT NULL DEFAULT false,
-    gzg boolean NOT NULL DEFAULT false,
-    zxg boolean NOT NULL DEFAULT false,
-    ccg boolean NOT NULL DEFAULT false
+    hold  boolean NOT NULL DEFAULT false,
+    jjcg  boolean NOT NULL DEFAULT false,
+    yxg   boolean NOT NULL DEFAULT false,
+    gzg   boolean NOT NULL DEFAULT false,
+    zxg   boolean NOT NULL DEFAULT false,
+    ccg   boolean NOT NULL DEFAULT false
 ) WITH (OIDS=FALSE);
 --DROP INDEX IF EXISTS ix_stock_list_code;
 CREATE INDEX ix_stock_list_code     ON stock_list USING btree (code);
@@ -198,14 +199,13 @@ DROP SEQUENCE IF EXISTS stock_fetch_log_seq;
 CREATE SEQUENCE stock_fetch_log_seq;
 CREATE TABLE stock_fetch_log
 (
-    id smallint NOT NULL DEFAULT nextval('stock_fetch_log_seq'),
+    id integer NOT NULL DEFAULT nextval('stock_fetch_log_seq'),
     code text,
-    newlydate date
+    fetchdate date
 ) WITH (OIDS=FALSE);
-ALTER TABLE stock_fetch_log OWNER TO hhj;
 CREATE INDEX ix_stock_fetch_log_code ON stock_fetch_log USING btree (code);
-
 */
+
 --------------------------------------------------------
 /*
 DROP TABLE IF EXISTS trade;
