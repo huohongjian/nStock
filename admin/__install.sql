@@ -1,5 +1,45 @@
 
+DROP TABLE IF EXISTS log;
+CREATE TABLE log
+(
+  id      serial PRIMARY KEY,
+  dowork  text,
+  status  boolean,
+  dtime   timestamp(0) without time zone NOT NULL DEFAULT now(),
+  remark  text
+) WITH (OIDS=FALSE);
 
+CREATE INDEX ix_log_dtime ON log USING btree (dtime);
+
+
+
+DROP TABLE IF EXISTS ts_k_data;
+CREATE TABLE ts_k_data
+(
+    id      serial PRIMARY KEY,
+    date    date,
+    code    text,
+    open    double precision,
+    close   double precision,
+    high    double precision,
+    low     double precision,
+    settle  double precision,
+    percent double precision,
+    volume  double precision,
+    amount  double precision,
+    ratio   double precision,
+    peak    boolean,
+    bott    boolean
+) WITH (OIDS=FALSE);
+-- ALTER TABLE ts_hist_data OWNER TO hhj;
+CREATE INDEX ix_k_data_code ON ts_k_data USING btree (code);
+CREATE INDEX ix_k_data_date ON ts_k_data USING btree (date);
+CREATE INDEX ix_k_data_peak ON ts_k_data USING btree (peak);
+CREATE INDEX ix_k_data_bott ON ts_k_data USING btree (bott);
+
+
+
+/*
 DROP TABLE IF EXISTS ts_hist_data;
 CREATE TABLE ts_hist_data
 (
@@ -32,7 +72,7 @@ CREATE INDEX ix_data_hist_hfq ON ts_hist_data USING btree (hfq);
 CREATE INDEX ix_data_hist_qfq ON ts_hist_data USING btree (qfq);
 CREATE INDEX ix_data_hist_ispeak ON ts_hist_data USING btree (ispeak);
 CREATE INDEX ix_data_hist_isbott ON ts_hist_data USING btree (isbott);
-
+*/
 
 --delete from ts_hist_data where date='2015-02-24';
 

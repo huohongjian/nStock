@@ -24,6 +24,22 @@ DBCHARSET = 'UFT-8'
 ENGINE = create_engine('postgresql://%s:%s@%s/%s' % (DBUSER, DBPASSWORD, DBHOST, DBNAME), echo=False)
 
 
+# only need to fetch once per year.
+def fetch_ts_trade_cal():
+	starttime = datetime.datetime.now()
+	print('Fetching trade calender ...')
+	df = ts.trade_cal()
+	print('Fetched data sucess! And Starting save data to database ...')
+	df.rename(columns = {
+		'calendarDate'	: 'calendar', 
+		'isOpen'		: 'isopen'
+	}, inplace=True)
+	df = df.set_index('calendar')
+	df.to_sql('ts_trade_cal', ENGINE, if_exists='replace')
+	endtime = datetime.datetime.now()
+	print('Saved to database sucess! time=[%s]' % (endtime-starttime))
+
+
 def fetch_stock_basics():
 #	sys.stdout.write('start fetching stock basic info ...')
 	print('Now starting to fetch stock basic info ...')
@@ -32,33 +48,44 @@ def fetch_stock_basics():
 	print('is done!')
 
 
-'''fetching is very slowly.'''
+'''fetching time is 30's.'''
 def fetch_stock_today_all():
-	print('Now starting to fetch all stock in today trade ...')
+	today = datetime.date.today()
+	r = db.fetchone("SELECT dtime FROM fetch_data_log WHERE dowork='fetch_today_all' ORDER BY dtime DESC")
+	if r[0]:
+		print(r[0]>today)
+		print(today)
+
+
+	return
+
+	starttime = datetime.datetime.now()
 	df = ts.get_today_all()
-	df.to_sql('stock_today_all', ENGINE, if_exists='replace')
-	print('is done!')
-
-
-
-
-
-
-def test_speek(code='600300'):
-	starttime = datetime.datetime.now()
-	ts.get_k_data(code)
 	endtime = datetime.datetime.now()
-	print('[ts.get_k_data()] fetching %s stock prices! time=[%s]'%(code, endtime-starttime))
-	
-	starttime = datetime.datetime.now()
-	ts.get_h_data(code)
-	endtime = datetime.datetime.now()
-	print('[ts.get_h_data()] fetching %s stock prices! time=[%s]'%(code, endtime-starttime))
+	print('\nFetching data is done! time=[%s]' % (endtime-starttime))
+
+#   df.columns = ['code', name', 'changepercent', 'trade', 'open', 'high', 'low', 'settlement'
+#				'volume', 'turnoverratio', 'amount', 'per', 'pb', 'mktcap', 'nmc']	
+	print('Processing data ... ')
+	df.drop(['name', 'per', 'pb', 'mktcap', 'nmc'], axis=1, inplace=True)
+	df.rename(columns = {
+		'changepercent'	: 'percent', 
+		'trade'			: 'close',
+		'settlement'	: 'settle',
+		'turnoverratio'	: 'ratio',
+		}, inplace=True)
+	today = str(datetime.date.today())
+	df['date'] = today
+	df = df.set_index('date')
+
+	print('Starting save data to database ... ')
 
 	starttime = datetime.datetime.now()
-	ts.get_hist_data(code)
+	df.to_sql('ts_k_data', ENGINE, if_exists='append')
+	db.execute("INSERT INTO log(dowork, status) VALUES('fetch_today_all', True)")
 	endtime = datetime.datetime.now()
-	print('[ts.get_hist_data()] fetching %s stock prices! time=[%s]'%(code, endtime-starttime))
+	print('is done! time=[%s]' % (endtime-starttime))
+
 
 
 def fetch_hist_data(cs=['600300', '300347']):
@@ -107,11 +134,32 @@ def fetch_hist_data(cs=['600300', '300347']):
 
 
 
+def fetch_k_data(code='600300', start='2016-01-01'):
+	starttime = datetime.datetime.now()
+	r = db.fetchone("SELECT max(date) FROM ts_k_data WHERE code='%s'" % code)
+	if r[0]:
+		start = str(r[0] + datetime.timedelta(days=1))
+
+	df = ts.get_k_data(code, start=start).set_index('date')
+
+	if df.empty:
+		endtime = datetime.datetime.now()
+		print('[%s] data is newly, not need to fetch! time=[%s]' % (code, endtime-starttime))
+	else:
+#		df.to_sql('ts_k_data', ENGINE, if_exists='append')
+		endtime = datetime.datetime.now()
+		print('[%s] fetch to database sucess! time=[%s] rows=%d'%(code, endtime-starttime, df.shape[0]))
+
+
+def exe_fetch_k_data():
+	cs = ['600300', '300347', '300002', '002247', '000881']
+	for code in cs:
+		fetch_k_data(code)
 
 
 if __name__ == '__main__':
 #	fetch_stock_basics()
 #	fetch_stock_today_all()
 
-#	test_speek()
-	fetch_hist_data()
+#	exe_fetch_k_data()
+	fetch_ts_trade_cal()
