@@ -2,15 +2,17 @@
 DROP TABLE IF EXISTS log;
 CREATE TABLE log
 (
-  id      serial PRIMARY KEY,
-  dowork  text,
-  status  boolean,
-  dtime   timestamp(0) without time zone NOT NULL DEFAULT now(),
-  remark  text
+  id      			serial PRIMARY KEY,
+  dtime   		timestamp(0) without time zone NOT NULL DEFAULT now(),
+  dowork  		text,
+  func 			text,
+  statement text,
+  remark  		text
 ) WITH (OIDS=FALSE);
 
 CREATE INDEX ix_log_dtime ON log USING btree (dtime);
 
+INSERT INTO log (dowork, func, remark) VALUES ('init database',  'admin.__install.py', 'init database sucess');
 
 
 DROP TABLE IF EXISTS ts_k_data;

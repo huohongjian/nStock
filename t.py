@@ -19,18 +19,18 @@ def is_trade_day(date):
 
 def pre_trade_day(date):
 	r = db.fetchone("SELECT calendar FROM ts_trade_cal WHERE calendar<'%s' AND isopen=1 ORDER BY calendar DESC" % date)
-	t = datetime.datetime.strptime(r[0], "%Y-%m-%d")
-	return datetime.date(t.year, t.month, t.day)
+	return datetime.datetime.strptime(r[0], "%Y-%m-%d").date()
 
 def next_trade_day(date):
 	r = db.fetchone("SELECT calendar FROM ts_trade_cal WHERE calendar>'%s' AND isopen=1 ORDER BY calendar" % date)
-	t = datetime.datetime.strptime(r[0], "%Y-%m-%d")
-	return datetime.date(t.year, t.month, t.day)
+	return datetime.datetime.strptime(r[0], "%Y-%m-%d").date()
 
 
 
 
-r = db.fetchone("SELECT dtime FROM fetch_data_log WHERE dowork='fetch_today_all' ORDER BY dtime DESC")
+r = db.fetchone("SELECT dtime FROM log WHERE dowork='fetch_today_all' ORDER BY dtime DESC")
+print(r)
+
 t = next_trade_day(r[0])
 
 
@@ -38,7 +38,6 @@ t = next_trade_day(r[0])
 today = datetime.date.today()
 nday = today + datetime.timedelta(days=1)
 
-print(nday.year)
 
 
 print(t, nday)

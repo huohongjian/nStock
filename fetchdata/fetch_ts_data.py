@@ -24,7 +24,24 @@ DBCHARSET = 'UFT-8'
 ENGINE = create_engine('postgresql://%s:%s@%s/%s' % (DBUSER, DBPASSWORD, DBHOST, DBNAME), echo=False)
 
 
-# only need to fetch once per year.
+##################################################################################
+def is_trade_day(date):
+	r = db.fetchone("SELECT isopen FROM ts_trade_cal WHERE calendar='%s'" % date)
+	return True if r[0]==1 else False
+
+def pre_trade_day(date):
+	r = db.fetchone("SELECT calendar FROM ts_trade_cal WHERE calendar<'%s' AND isopen=1 ORDER BY calendar DESC" % date)
+	return datetime.datetime.strptime(r[0], "%Y-%m-%d").date()
+
+def next_trade_day(date):
+	r = db.fetchone("SELECT calendar FROM ts_trade_cal WHERE calendar>'%s' AND isopen=1 ORDER BY calendar" % date)
+	return datetime.datetime.strptime(r[0], "%Y-%m-%d").date()
+	
+###################################################################################
+
+
+
+# need to fetch once per year.
 def fetch_ts_trade_cal():
 	starttime = datetime.datetime.now()
 	print('Fetching trade calender ...')
@@ -40,7 +57,7 @@ def fetch_ts_trade_cal():
 	print('Saved to database sucess! time=[%s]' % (endtime-starttime))
 
 
-def fetch_stock_basics():
+def _get_basics():
 #	sys.stdout.write('start fetching stock basic info ...')
 	print('Now starting to fetch stock basic info ...')
 	df = ts.get_stock_basics()
@@ -48,17 +65,37 @@ def fetch_stock_basics():
 	print('is done!')
 
 
-'''fetching time is 30's.'''
-def fetch_stock_today_all():
-	today = datetime.date.today()
-	r = db.fetchone("SELECT dtime FROM fetch_data_log WHERE dowork='fetch_today_all' ORDER BY dtime DESC")
-	if r[0]:
-		print(r[0]>today)
-		print(today)
 
+def fetch_today_all():
+	
+	r = db.fetchone("SELECT dtime FROM log WHERE dowork='fetch_today_all' ORDER BY dtime DESC")
+	
+	fetched = r[0] if r else datetime.datetime(2016,1,1)
+	fetchedDay = fetched.date()
+	now = datetime.datetime.now()
+	today = now.date()
+
+	if (fetchedDay == today):
+		if (fetched.time() < datetime.time(15, 30, 0)):
+			sql = '''DELETE FROM ts_k_data WHERE date="%s"''' % today
+			SQL =  sql + '''; INSERT INTO log (dowork, func, statement) VALUES ('delete data', 'fetch_today_all()', '%s')''' % sql
+			db.execute(SQL)
+			print('execute statement sucess: %s' % sql)
+			_get_today_all();
+	else :
+		nextTradeDay = next_trade_day(fetchedDay)
+		if ( nextTradeDay == today):
+			_get_today_all()
+		else:
+			_get_hist_data(start=nextTradeDay)
 
 	return
 
+
+
+
+def _get_today_all():
+	print('Fetch data need about 30s. Please wait a moment...')
 	starttime = datetime.datetime.now()
 	df = ts.get_today_all()
 	endtime = datetime.datetime.now()
@@ -82,13 +119,13 @@ def fetch_stock_today_all():
 
 	starttime = datetime.datetime.now()
 	df.to_sql('ts_k_data', ENGINE, if_exists='append')
-	db.execute("INSERT INTO log(dowork, status) VALUES('fetch_today_all', True)")
+	db.execute("INSERT INTO log(dowork, statement) VALUES('fetch_today_all', '_get_today_all()')")
 	endtime = datetime.datetime.now()
 	print('is done! time=[%s]' % (endtime-starttime))
 
 
 
-def fetch_hist_data(cs=['600300', '300347']):
+def _get_hist_data(cs=['600300', '300347'], start=''):
 	today = datetime.date.today()
 	weekday = today.weekday()
 	if weekday==5:
@@ -134,13 +171,32 @@ def fetch_hist_data(cs=['600300', '300347']):
 
 
 
-def fetch_k_data(code='600300', start='2016-01-01'):
-	starttime = datetime.datetime.now()
-	r = db.fetchone("SELECT max(date) FROM ts_k_data WHERE code='%s'" % code)
-	if r[0]:
-		start = str(r[0] + datetime.timedelta(days=1))
+def _get_k_data(codes=['600300', '300347', '300002', '002247', '000881'], start='2016-01-01'):
+	rs = db.fetchall("SELECT code FROM stock_basics limit 100")
+	
+	codes = [r[0] for r in rs]
+	
 
-	df = ts.get_k_data(code, start=start).set_index('date')
+	
+	
+	starttime = datetime.datetime.now()
+	sql = 'INSERT INTO ts_k_data (code, open, close) VALUES '
+	i, s = 0, len(codes)
+	for code in codes:
+		i += 1
+		df = ts.get_k_data(code, start=start)
+		print('[%s] fetch data sucess.   %d/%d   time=[%s]' % (code, i, s, datetime.datetime.now() - starttime))
+		
+		if not df.empty:
+			for index, row in df.iterrows():
+				sql += "('%s', %f, %f)," % (row['code'], row['open'], row['close'] )
+	
+	starttime = datetime.datetime.now()
+	sql = sql[0:-1]
+	db.execute(sql)
+	endtime = datetime.datetime.now()
+	print('fetch to database sucess! time=[%s]'%( endtime-starttime))
+	return
 
 	if df.empty:
 		endtime = datetime.datetime.now()
@@ -151,15 +207,11 @@ def fetch_k_data(code='600300', start='2016-01-01'):
 		print('[%s] fetch to database sucess! time=[%s] rows=%d'%(code, endtime-starttime, df.shape[0]))
 
 
-def exe_fetch_k_data():
-	cs = ['600300', '300347', '300002', '002247', '000881']
-	for code in cs:
-		fetch_k_data(code)
 
 
 if __name__ == '__main__':
-#	fetch_stock_basics()
-#	fetch_stock_today_all()
-
-#	exe_fetch_k_data()
-	fetch_ts_trade_cal()
+#	fetch_ts_trade_cal()
+#	fetch_basics()
+#	fetch_today_all()
+#	_get_basics()
+	_get_k_data()
