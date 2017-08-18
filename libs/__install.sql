@@ -1,22 +1,32 @@
 
-DROP TABLE IF EXISTS log;
-CREATE TABLE log
+DROP TABLE IF EXISTS st_dictionary;
+CREATE TABLE st_dictionary
 (
-  id      			serial PRIMARY KEY,
-  dtime   		timestamp(0) without time zone NOT NULL DEFAULT now(),
-  dowork  		text,
-  func 			text,
-  statement text,
-  remark  		text
+  id      serial PRIMARY KEY,
+  key     text,
+  value   text
 ) WITH (OIDS=FALSE);
+CREATE INDEX ix_st_dictionary_key  ON st_dictionary USING btree (key);
+INSERT INTO st_dictionary (key, value) VALUES 
+('renew_ts_trade_cal',  '获取交易日数据，并保存至[ts_trade_cal]表'),
+('renew_ts_basics',     '获取全部股票的基本信息，并保存至[ts_basics]表'),
+('renew_ts_today_all',  '获取股票的实时交易数据，并保存至表[ts_today_all]');
 
-CREATE INDEX ix_log_dtime ON log USING btree (dtime);
 
-INSERT INTO log (dowork, func, remark) VALUES ('init database',  'admin.__install.py', 'init database sucess');
+DROP TABLE IF EXISTS st_log;
+CREATE TABLE st_log
+(
+  id      serial PRIMARY KEY,
+  dtime   timestamp(0) without time zone NOT NULL DEFAULT now(),
+  dowork  text,
+  remark  text
+) WITH (OIDS=FALSE);
+CREATE INDEX ix_st_log_dtime  ON st_log USING btree (dtime);
+CREATE INDEX ix_st_log_dowork ON st_log USING btree (dowork);
 
 
-DROP TABLE IF EXISTS ts_k_data;
-CREATE TABLE ts_k_data
+DROP TABLE IF EXISTS st_k_data;
+CREATE TABLE st_k_data
 (
     id      serial PRIMARY KEY,
     date    date,
@@ -26,18 +36,18 @@ CREATE TABLE ts_k_data
     high    double precision,
     low     double precision,
     settle  double precision,
-    percent double precision,
-    volume  double precision,
+    change  double precision,
     amount  double precision,
-    ratio   double precision,
+    volume  double precision,
+    turn    double precision,
     peak    boolean,
     bott    boolean
 ) WITH (OIDS=FALSE);
 -- ALTER TABLE ts_hist_data OWNER TO hhj;
-CREATE INDEX ix_k_data_code ON ts_k_data USING btree (code);
-CREATE INDEX ix_k_data_date ON ts_k_data USING btree (date);
-CREATE INDEX ix_k_data_peak ON ts_k_data USING btree (peak);
-CREATE INDEX ix_k_data_bott ON ts_k_data USING btree (bott);
+CREATE INDEX ix_st_k_data_code ON st_k_data USING btree (code);
+CREATE INDEX ix_st_k_data_date ON st_k_data USING btree (date);
+CREATE INDEX ix_st_k_data_peak ON st_k_data USING btree (peak);
+CREATE INDEX ix_st_k_data_bott ON st_k_data USING btree (bott);
 
 
 
