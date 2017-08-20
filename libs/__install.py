@@ -22,11 +22,12 @@ def create_tables():
 
 def init_data():
 	print('Now init data, need fetch data though internet, please wait a moment...')
-	fd.get_ts_trade_cal()
+	fd.renew_ts_trade_cal()
+	fd.renew_ts_basics()
 
 
 
 if __name__ == '__main__':
     create_tables()
-    init_data()
+ #   init_data()
 

@@ -42,9 +42,9 @@ def renew_ts_basics():
 	df = ts.get_stock_basics()
 	print('Fetched data sucess! time=[%s]' % (datetime.datetime.now()-st))
 
-	print('Saving data to [ts_basics]...')
+	print('Saving data to [ts_stock_basics]...')
 	st = datetime.datetime.now()
-	df.to_sql('ts_basics', ENGINE, if_exists='replace')
+	df.to_sql('ts_basics', db.ENGINE, if_exists='replace')
 	fn.write_log(dowork='get_ts_basics', remark='ok')
 	print('Saved data sucess! time=[%s]\n' % (datetime.datetime.now()-st))
 	return True
@@ -58,7 +58,7 @@ def renew_ts_today_all():
 
 	print('Saving data to [ts_today_all]...')
 	st = datetime.datetime.now()
-	df.to_sql('ts_today_all', ENGINE, if_exists='replace')
+	df.to_sql('ts_today_all', db.ENGINE, if_exists='replace')
 	fn.write_log(dowork='get_ts_today_all', remark='ok')
 	print('Saved data sucess! time=[%s]\n' % (datetime.datetime.now()-st))
 	return True
@@ -79,71 +79,110 @@ def get_ts_hist_data(codes=[], start='2017-07-01'):
 '''
 
 
+def fetch_to_st_info():
+	print('Fetching stock basic info...')
+	time.clock()
+	df = ts.get_stock_basics()
+	print('Fetched data sucess! time=[%s]' % (time.clock()))
+
+	print('Saving data to [ts_stock_basics]...')
+	sql = ''
+	for index, r in df.iterrows():
+		sql += '''INSERT INTO st_info(code, pe, outs, totals, assets, liquid, fixed, gjj, gjjp,
+					esp, bvps, pb, market, updp, undpp, rev, profit, gpr, npr, holders)
+					VALUES ('{0}', {1}, {2}, {3}, {4}, {5}, {6}, {7}, {8}, {9}, {10}, {11}, '{12}', {13}, {14}, {15}, {16}, {17}, {18}, {19})
+					CONFLICT (code) do UPDATE SET
+					pe 			= {1},
+					outs		= {2},
+					totals	= {3},
+					assets 	= {4},
+					liquid 	= {5},
+					fixed	= {6},
+	gjj	= {7},
+	gjjp = {8},
+	esp	= {9},
+	bvps	= {10},
+	pb	= {11},
+	market	= '{12}',
+	updp =  {13},
+	undpp = {14},
+	rev = {15},
+	profit = {16},
+	gpr = {17},
+	npr	= {18},
+	holders = {19};'''.format(r.code, r.pe, r.outstanding, r.totals, t.totalAssets, r.liquidAssets, r.fixedAssets, r.reserved, r.reservedPerShare, r.esp, r.bvps, r.pb, r.timeToMarket, r.undp, r.undpp, r.rev, r.profit, r.gpr, r.npr, r.holders)
+
+
+	print(sql)
+
+
 
 
 def addto_st_k_data():
 	now   = datetime.datetime.now()
 	today = now.date()
 
-	r = db.fetchone("SELECT max(date) FROM st_k_data")
-	fetch_day = r[0] if r[0] else datetime.date(2016,1,1)
-
+	v = db.fetchval("SELECT max(date) FROM st_k_data")
+	fetch_day = v if v else datetime.date(2017,8,17)
 
 	if(fetch_day<fn.pre_trade_day(today)):
 		_get_k_data(start=str(fn.next_trade_day(fetch_day)))
+
 	elif(fetch_day==fn.pre_trade_day(today)):
 		if(now.time()<datetime.time(15, 20, 0)):
-			print('Please wait to 15:30:00, then start to fetch data.')
+			print('Data is newly, today k_data should be fetched after 15:30:00.')
 		else:
-			#_addto_st_k_data_2()
-
-			pass
+#				renew_ts_today_all()
+				print('Copy data from [ts_today_all] to [st_k_data].')
+				db.execute("INSERT INTO st_k_data(date, code, open, close, high, low, volume) \
+							SELECT '%s' AS date, code, open, trade, high, low, volume \
+							FROM ts_today_all" % (str(today)))
 	elif(fetch_day==today):
-		print('The data is newly, need no any work.')
+		print('[st_k_data] data is newly, need no any work.')
 	else:
-		print('Fetched day more than today, please check table [st_k_data], maybe has some wrong...')
+		print('Fetched day more than today, [st_k_data] maybe has some wrong...')
 
+
+	
 
 def _get_k_data(codes=[], start='2016-01-01', autype='qfq'):
 	SQL = 'INSERT INTO st_k_data (date, code, open, close, high, low, volume) VALUES '
 	sql = SQL
-	rs 	= db.fetchall("SELECT code FROM ts_basics limit 30")
-	i 	= 0
-	s 	= len(rs)
-	I 	= 0
-	for r in rs:
-		st = datetime.datetime.now()
+	if codes==[]:
+		codes =  db.fetchcol("SELECT code FROM ts_basics limit 30")
+	
+	i, s, I	= 0, len(codes), 0
+	for code in codes:
 		i += 1
-		code = r[0]
 		df = ts.get_k_data(code=code, start=start, autype=autype)
-		print('%d/%d [%s] Fetched data sucess! time=[%s]' % (i, s, code, datetime.datetime.now()-st))
-		
-		if not df.empty:
-			for index, row in df.iterrows():
+		if df.empty:
+			print('%d/%d [%s] No data fetched. time=%s' % (i, s, code, time.clock()))
+			continue
+		else:
+			print('%d/%d [%s] Fetched data sucess! time=%s' % (i, s, code, time.clock()))
+			for index, r in df.iterrows():
 				I += 1
 				sql += "('%s', '%s', %f, %f, %f, %f, %f)," % \
-				(row['date'], row['code'], row['open'], row['close'], row['high'], row['low'], row['volume'])
+				(r['date'], r['code'], r['open'], r['close'], r['high'], r['low'], r['volume'])
 
-		if(I>10000):
-			_save_data_to_ts_k_data(sql[0:-1])
+		if(I>9999 or i>=s):
+			print('Saving data to [st_k_data], please wait a moment...')
+			db.execute(sql[0:-1])
+			print('Saved data sucess! time=%s'%(time.clock()))
 			sql = SQL
 			I 	= 0
-	
-	if (sql != SQL):
-		_save_data_to_ts_k_data(sql[0:-1])
 	return True
 
-
-def _save_data_to_ts_k_data(sql):
-	st = datetime.datetime.now()
-	print('Now saving data to [ts_k_data], please wait a moment...')
-	db.execute(sql)
-	print('Saved data sucess! time=[%s]'%(datetime.datetime.now()-st))
-	return True
 
 
 if __name__ == '__main__':
 
 #	renew_ts_trade_cal()
 
-	addto_st_k_data()
+#	_get_k_data()
+	
+#	addto_st_k_data()
+
+#	renew_ts_today_all()
+
+	fetch_to_st_info()

@@ -1,4 +1,4 @@
-
+/*
 DROP TABLE IF EXISTS st_dictionary;
 CREATE TABLE st_dictionary
 (
@@ -48,45 +48,44 @@ CREATE INDEX ix_st_k_data_code ON st_k_data USING btree (code);
 CREATE INDEX ix_st_k_data_date ON st_k_data USING btree (date);
 CREATE INDEX ix_st_k_data_peak ON st_k_data USING btree (peak);
 CREATE INDEX ix_st_k_data_bott ON st_k_data USING btree (bott);
-
-
-
-/*
-DROP TABLE IF EXISTS ts_hist_data;
-CREATE TABLE ts_hist_data
-(
-    id   serial PRIMARY KEY,
-    date date,
-    code text,
-    open double precision,
-    high double precision,
-    close double precision,
-    low double precision,
-    volume double precision,
-    price_change double precision,
-    p_change double precision,
-    ma5 double precision,
-    ma10 double precision,
-    ma20 double precision,
-    v_ma5 double precision,
-    v_ma10 double precision,
-    v_ma20 double precision,
-    turnover double precision,
-    qfq double precision,
-    hfq double precision,
-    ispeak boolean,
-    isbott boolean
-) WITH (OIDS=FALSE);
--- ALTER TABLE ts_hist_data OWNER TO hhj;
-CREATE INDEX ix_data_hist_code ON ts_hist_data USING btree (code);
-CREATE INDEX ix_data_hist_date ON ts_hist_data USING btree (date);
-CREATE INDEX ix_data_hist_hfq ON ts_hist_data USING btree (hfq);
-CREATE INDEX ix_data_hist_qfq ON ts_hist_data USING btree (qfq);
-CREATE INDEX ix_data_hist_ispeak ON ts_hist_data USING btree (ispeak);
-CREATE INDEX ix_data_hist_isbott ON ts_hist_data USING btree (isbott);
 */
 
---delete from ts_hist_data where date='2015-02-24';
+
+
+DROP TABLE IF EXISTS ts_hist_data;
+DROP SEQUENCE IF EXISTS ts_hist_data_seq;
+CREATE SEQUENCE ts_hist_data_seq;
+CREATE TABLE ts_hist_data
+(
+    id   		bigint NOT NULL DEFAULT nextval('ts_hist_data_seq') PRIMARY KEY,
+    date 		date,
+    code 		text,
+    open 		double precision,
+    close 	double precision,
+    high 		double precision,
+    low 		double precision,
+    yest		double precision,
+    pc 			double precision,
+    pcr 		double precision,
+    volume double precision,
+    amount double precision,
+    m5 		double precision,
+    m10 	double precision,
+    m20 	double precision,
+    v5 		double precision,
+    v10 	double precision,
+    v20 	double precision,
+    turnover double precision,
+    qfq 	double precision,
+    hfq 	double precision,
+    peak 	integer NOT NULL DEFAULT -1,
+    bott 	integer NOT NULL DEFAULT -1
+) WITH (OIDS=FALSE);
+CREATE INDEX ix_ts_hist_data_code 	ON ts_hist_data USING btree (code);
+CREATE INDEX ix_ts_hist_data_date 	ON ts_hist_data USING btree (code);
+CREATE INDEX ix_ts_hist_data_peak 	ON ts_hist_data USING btree (peak);
+CREATE INDEX ix_ts_hist_data_bott 	ON ts_hist_data USING btree (bott);
+
 
 ----------------------------------------------------------------
 /*
@@ -137,43 +136,50 @@ CREATE INDEX ix_data_realtime_code ON data_realtime USING btree (code);
 */
 ----------------------------------------------------------------
 
-DROP TABLE IF EXISTS stock_list;
-CREATE TABLE stock_list (
-    id      serial PRIMARY KEY,
-    code    text,
-    name    text,
-    industry text,
-    concept text,
-    area    text,
-    al    boolean NOT NULL DEFAULT true,
-    sh    boolean NOT NULL DEFAULT false,
-    sz    boolean NOT NULL DEFAULT false,
-    st    boolean NOT NULL DEFAULT false,
-    zxb   boolean NOT NULL DEFAULT false,
-    cyb   boolean NOT NULL DEFAULT false,
+DROP TABLE IF EXISTS st_info;
+CREATE TABLE st_info (
+    id      		serial PRIMARY KEY,
+    code    	text UNIQUE,		-- 代码
+    name    	text,						-- 名称
+    area    	text,				-- 地区
+    industry text,		-- 所属行业
+	pe			real,		-- 市盈率
+	outs		real,		-- 流通股本（亿）
+	totals real,		-- 总股本（亿）
+	assets real,		-- 总资产（万）
+	liquid real,		-- 流动资产
+	fixed	real,		-- 固定资产
+	gjj		real,	-- 公积金
+	gjjp		real, -- 每股公积金
+	esp		real,		-- 每股收益
+	bvps		real,		-- 每股净资
+	pb			real, 		-- 市净率
+	market date,				-- 上市日期
+	updp		real,		-- 未分配利润
+	undpp	real,		-- 每股未分配利润
+	rev		real,		-- 收入同比
+	profit real,		-- 利润同比
+	gpr		real, 		-- 毛利率
+	npr		real,		-- 净利润率
+	holders integer,		-- 股东人数
+    
+    al   	boolean NOT NULL DEFAULT true,
+    sh		boolean NOT NULL DEFAULT false,
+    sz		boolean NOT NULL DEFAULT false,
+    st    	boolean NOT NULL DEFAULT false,
+    zxb   	boolean NOT NULL DEFAULT false,
+    cyb   	boolean NOT NULL DEFAULT false,
     hssb  boolean NOT NULL DEFAULT false,
+    
     szwl  boolean NOT NULL DEFAULT false,
-    tradable boolean NOT NULL DEFAULT false,
-    hold  boolean NOT NULL DEFAULT false,
     jjcg  boolean NOT NULL DEFAULT false,
     yxg   boolean NOT NULL DEFAULT false,
     gzg   boolean NOT NULL DEFAULT false,
     zxg   boolean NOT NULL DEFAULT false,
     ccg   boolean NOT NULL DEFAULT false
 ) WITH (OIDS=FALSE);
---DROP INDEX IF EXISTS ix_stock_list_code;
-CREATE INDEX ix_stock_list_code     ON stock_list USING btree (code);
-CREATE INDEX ix_stock_list_industry ON stock_list USING btree (industry);
-CREATE INDEX ix_stock_list_concept  ON stock_list USING btree (concept);
-CREATE INDEX ix_stock_list_area     ON stock_list USING btree (area);
-CREATE INDEX ix_stock_list_al       ON stock_list USING btree (al);
-CREATE INDEX ix_stock_list_tradable ON stock_list USING btree (tradable);
-CREATE INDEX ix_stock_list_hold     ON stock_list USING btree (hold);
-CREATE INDEX ix_stock_list_jjcg     ON stock_list USING btree (jjcg);
-CREATE INDEX ix_stock_list_yxg      ON stock_list USING btree (yxg);
-CREATE INDEX ix_stock_list_gzg      ON stock_list USING btree (gzg);
-CREATE INDEX ix_stock_list_zxg      ON stock_list USING btree (zxg);
-CREATE INDEX ix_stock_list_ccg      ON stock_list USING btree (ccg);
+CREATE INDEX ix_st_info_code 	ON st_info USING btree (code);
+
 
 -----------------------------------------------------------------
 /*

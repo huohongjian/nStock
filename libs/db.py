@@ -62,6 +62,16 @@ def fetchone(sql):
 	print("connect database failed.")
 	return False
 
+def fetchrow(sql):
+	return fetchone(sql)
+
+def fetchcol(sql, i=0):
+	return [r[i] for r in fetchall(sql)]
+
+def fetchval(sql, i=0):
+	return fetchone(sql)[i]
+
+
 
 def execute(sql, returning=False):
 	if(CONN):
@@ -89,31 +99,3 @@ def close():
 			return False
 	return True
 
-'''
-
-import psycopg2
-from sqlalchemy import create_engine
-DBHOST = 'localhost'
-DBPORT = '5432'
-DBNAME = 'stock'
-DBUSER = 'postgres'
-DBPASSWORD = ''
-DBCHARSET = 'UFT-8'
-
-
-class Sqlalchemy:
-    def __int__(self):
-        pass
-
-    def create_engine(self):
-        engine = False
-        try:
-            engine = create_engine('postgresql://%s:%s@%s/%s' % (DBUSER, DBPASSWORD, DBHOST, DBNAME), echo=False)
-        except Exception as data:
-            print("connect database failed, %s" % data)
-            engine = False
-        return engine
-
-
-
-'''
