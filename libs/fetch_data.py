@@ -82,38 +82,54 @@ def get_ts_hist_data(codes=[], start='2017-07-01'):
 def fetch_to_st_info():
 	print('Fetching stock basic info...')
 	time.clock()
-	df = ts.get_stock_basics()
-	print('Fetched data sucess! time=[%s]' % (time.clock()))
+	df = ts.get_stock_basics().head(1)
 
-	print('Saving data to [ts_stock_basics]...')
+	print('Fetched data sucess! time=[%s]' % (time.clock()))
+ 
+	print('Structuring SQL statement...') 
+
+	sql = fn.save_df(df, 'st_info');
+	print(sql)
+#	print(time.clock())
+	return
+
+
 	sql = ''
 	for index, r in df.iterrows():
-		sql += '''INSERT INTO st_info(code, pe, outs, totals, assets, liquid, fixed, gjj, gjjp,
-					esp, bvps, pb, market, updp, undpp, rev, profit, gpr, npr, holders)
-					VALUES ('{0}', {1}, {2}, {3}, {4}, {5}, {6}, {7}, {8}, {9}, {10}, {11}, '{12}', {13}, {14}, {15}, {16}, {17}, {18}, {19})
-					CONFLICT (code) do UPDATE SET
-					pe 			= {1},
-					outs		= {2},
-					totals	= {3},
-					assets 	= {4},
-					liquid 	= {5},
-					fixed	= {6},
-	gjj	= {7},
-	gjjp = {8},
-	esp	= {9},
-	bvps	= {10},
-	pb	= {11},
-	market	= '{12}',
-	updp =  {13},
-	undpp = {14},
-	rev = {15},
-	profit = {16},
-	gpr = {17},
-	npr	= {18},
-	holders = {19};'''.format(r.code, r.pe, r.outstanding, r.totals, t.totalAssets, r.liquidAssets, r.fixedAssets, r.reserved, r.reservedPerShare, r.esp, r.bvps, r.pb, r.timeToMarket, r.undp, r.undpp, r.rev, r.profit, r.gpr, r.npr, r.holders)
+		sql += """INSERT INTO st_info(
+		code, name, area, industry, pe, outs, totals,
+				assets, liquid, fixed, gjj, gjjp, esp, bvps, pb, market,
+				updp, undpp, rev, profit, gpr, npr, holders)
+		VALUES ('{0}', '{1}', '{2}', '{3}', {4}, {5}, {6}, {7}, {8}, {9}, {10}, {11},
+				'{12}', {13}, {14}, '{15}', {16}, {17}, {18}, {19}, {20}, {21}, {22})
+		ON CONFLICT (code) do UPDATE SET
+				name 	= '{1}',			area 	= '{2}',
+				industry= '{3}',			pe 		= {4},
+				outs	= {5},				totals	= {6},
+				assets 	= {7},				liquid 	= {8},
+				fixed	= {9},				gjj		= {10},
+				gjjp 	= {11},				esp		= {12},
+				bvps	= {13},				pb		= {14},
+				market	= '{15}',			updp 	= {16},
+				undpp 	= {17},				rev 	= {18},
+				profit 	= {19},				gpr 	= {20},
+				npr		= {21},				holders = {22};"""\
+		.format(index,
+				r['name'],			r['area'],				r['industry'],
+				r['pe'],			r['outstanding'], 		r['totals'],
+				r['totalAssets'], 	r['liquidAssets'], 		r['fixedAssets'], 
+				r['reserved'],		r['reservedPerShare'], 	r['esp'],
+				r['bvps'],			r['pb'],				r['timeToMarket'],
+				r['undp'],			r['perundp'],			r['rev'],
+				r['profit'],		r['gpr'],				r['npr'],
+				r['holders'])
+	print('Structured sucess! time=[{}]'.format(time.clock()))
+	
+	print('Saving data to [ts_stock_basics]...')
+	db.execute(sql)
+	print('Saved data sucess! time=%s'%(time.clock()))
 
 
-	print(sql)
 
 
 

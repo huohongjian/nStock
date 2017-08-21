@@ -138,31 +138,31 @@ CREATE INDEX ix_data_realtime_code ON data_realtime USING btree (code);
 
 DROP TABLE IF EXISTS st_info;
 CREATE TABLE st_info (
-    id      		serial PRIMARY KEY,
-    code    	text UNIQUE,		-- 代码
-    name    	text,						-- 名称
-    area    	text,				-- 地区
-    industry text,		-- 所属行业
-	pe			real,		-- 市盈率
-	outs		real,		-- 流通股本（亿）
-	totals real,		-- 总股本（亿）
-	assets real,		-- 总资产（万）
-	liquid real,		-- 流动资产
-	fixed	real,		-- 固定资产
-	gjj		real,	-- 公积金
-	gjjp		real, -- 每股公积金
-	esp		real,		-- 每股收益
-	bvps		real,		-- 每股净资
-	pb			real, 		-- 市净率
-	market date,				-- 上市日期
-	updp		real,		-- 未分配利润
-	undpp	real,		-- 每股未分配利润
-	rev		real,		-- 收入同比
-	profit real,		-- 利润同比
-	gpr		real, 		-- 毛利率
-	npr		real,		-- 净利润率
-	holders integer,		-- 股东人数
-    
+    id      	serial PRIMARY KEY,
+    code    	text UNIQUE,-- 代码
+    name    	text,		-- 名称
+    area    	text,		-- 地区
+    industry    text,		-- 所属行业
+    pe			     real,		-- 市盈率
+    outstanding  real,		-- 流通股本（亿）
+    totals      real,		-- 总股本（亿）
+    totalAssets      real,		-- 总资产（万）
+    liquidAssets      real,		-- 流动资产
+    fixedAssets	      real,		-- 固定资产
+    reserved         real,       -- 公积金
+    reservedPerShare		    real,       -- 每股公积金
+    esp         real,       -- 每股收益
+    bvps		     real,		-- 每股净资
+    pb			     real, 		-- 市净率
+    timeToMarket      integer,		-- 上市日期
+    undp		    real,		-- 未分配利润
+    perundp       real,		-- 每股未分配利润
+    rev         real,		-- 收入同比
+    profit      real,		-- 利润同比
+    gpr         real,       -- 毛利率
+    npr         real,       -- 净利润率
+    holders     integer,    -- 股东人数
+
     al   	boolean NOT NULL DEFAULT true,
     sh		boolean NOT NULL DEFAULT false,
     sz		boolean NOT NULL DEFAULT false,
@@ -170,7 +170,7 @@ CREATE TABLE st_info (
     zxb   	boolean NOT NULL DEFAULT false,
     cyb   	boolean NOT NULL DEFAULT false,
     hssb  boolean NOT NULL DEFAULT false,
-    
+
     szwl  boolean NOT NULL DEFAULT false,
     jjcg  boolean NOT NULL DEFAULT false,
     yxg   boolean NOT NULL DEFAULT false,
