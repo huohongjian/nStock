@@ -6,6 +6,14 @@ from tqdm import tqdm, trange
 from time import sleep
 
 
+
+bar = trange(10)
+for i in bar:
+	bar.set_description("Processing %d" % i)
+	sleep(0.1)
+	if not (i % 3):
+		tqdm.write("Done task %i" % i)
+
 '''
 for i in trange(10):
 	sleep(0.1)
@@ -32,11 +40,13 @@ with tqdm(total=100) as pbar:
 		pbar.update(10)
 
 '''
-
-def fnw(x):
-	sleep(0.5)
+'''
+def fnw(x, a, b):
+	sleep(0.2)
 	tqdm.write(str(x.name))
 	tqdm.pandas()
+	print(a, b)
+	return 'q'
 
 
 import pandas as pd
@@ -48,13 +58,19 @@ print(df)
 # (can use `tqdm_gui`, `tqdm_notebook`, optional kwargs, etc.)
 tqdm.pandas(desc="my bar!")
 
+
+
+
+
 # Now you can use `progress_apply` instead of `apply`
 #df.progress_apply(fnw)
 
 #print(d)
 
-df.progress_apply(fnw, axis=1)
+r = df.progress_apply(fnw, axis=1, a='aa', b='ba')
 
-
+print(r)
+print(df)
 # can also groupby:
 # df.groupby(0).progress_apply(lambda x: x**2)
+'''

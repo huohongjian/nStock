@@ -5,7 +5,7 @@
 import datetime
 import tushare 	as ts
 import pandas 	as pd
-import numpy 	as np
+import numpy 		as np
 
 from tqdm import tqdm, trange
 
@@ -38,68 +38,70 @@ def save_df(df, tablename, mode='upsert'):
 		print('This dataframe is empty')
 		return False
 
-	indexname = df.index.name
 	SQL = ''
+	cache = 5000
+	indexname = df.index.name
+	lines 			= df.shape[0]
+	columns   	= df.columns
+	colTypes 	= df.dtypes
+	indexType = df.index.dtype
+	saveTimes = 0
 
-	tqdm.pandas(desc="Structuring SQL!")
-
-	def _save_df(row):
+	bar = trange(lines)
+	for i in bar:
+		row = df.ix[i]
 		index = row.name
-#	for index, row in df.iterrows():
+		bar.set_description("Structuring SQL [{}]".format(index))
+		
 		if(mode=='insert' or mode=='upsert'):
 			sql = "INSERT INTO " + tablename + "(" + indexname
 			for col in df.columns:
 				sql += ", " + col
-
-			if isinstance(index, (int, float)):
-				sql += ") VALUES (" + str(index)
+			sql += ") VALUES ("
+			if indexType in ('int', 'float'):
+				sql += str(index)
 			else:
-				sql += ") VALUES ('{}'".format(index)
+				sql += "'" + str(index) + "'"
 
-			for col in df.columns:
-				val = row[col]
-				if isinstance(val, (int, float)):
-					sql += ", " + str(val)
+			for col in columns:
+				if colTypes[col] in ('int', 'float'):
+					sql += ", " + str(row[col])
 				else:
-					sql += ", '" + val + "'"
+					sql += ", '" + str(row[col]) + "'"
 			sql += ");"
-
 
 		elif(mode=='update'):
 			sql = "UPDATE " + tablename + " SET "
-
-			for col in df.columns:
-				val = row[col]
-				if isinstance(val, (int, float)):
-					sql += "{}={},".format(col, val)
+			for col in columns:
+				if colTypes[col] in ('int', 'float'):
+					sql += "{}={},".format(col, row[col])
 				else:
-					sql += "{}='{}',".format(col, val)
-			sql = sql[0:-1]
+					sql += "{}='{}',".format(col, row[col])
+			sql = sql[0:-1] + "WHERE " + indexname + "="
 
-			if isinstance(index, (int, float)):
-				sql += "WHERE {}={};".format(indexname, index)
+			if indexType in ('int', 'float'):
+				sql +=  index + ";"
 			else:
-				sql += "WHERE {}='{};'".format(indexname, index)
-
+				sql += "'" + index + "';"
 
 		if(mode=='upsert'):
 			sql = sql[0:-1] + " ON CONFLICT (" + indexname + ") do UPDATE SET "
 			for col in df.columns:
-				t = row[col]
-				if isinstance(t, (int, float)):
-					sql += "{}={},".format(col, t)
+				if colTypes[col] in ('int', 'float'):
+					sql += "{}={},".format(col, row[col])
 				else:
-					sql += "{}='{}',".format(col, t)
+					sql += "{}='{}',".format(col, row[col])
 			sql = sql[0:-1] + ";"
 
-		print(sql)
-
-		tqdm.pandas()
-	
-
-	df.progress_apply(_save_df, axis=1)
-
-	return SQL
+		SQL += sql
+		if(i%cache==cache-1 or i==lines-1):
+			saveTimes += 1
+			bar.set_description("Saving cached data [{}].".format(saveTimes))
+			db.execute(SQL)
+			SQL = ''
+		if(i==lines-1):
+			bar.set_description("This task is done!")
+	return True
 
 
 
