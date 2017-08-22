@@ -136,32 +136,32 @@ CREATE INDEX ix_data_realtime_code ON data_realtime USING btree (code);
 */
 ----------------------------------------------------------------
 
-DROP TABLE IF EXISTS st_info;
-CREATE TABLE st_info (
-    id      	serial PRIMARY KEY,
-    code    	text UNIQUE,-- 代码
-    name    	text,		-- 名称
-    area    	text,		-- 地区
-    industry    text,		-- 所属行业
-    pe			     real,		-- 市盈率
-    outstanding  real,		-- 流通股本（亿）
-    totals      real,		-- 总股本（亿）
-    totalAssets      real,		-- 总资产（万）
-    liquidAssets      real,		-- 流动资产
-    fixedAssets	      real,		-- 固定资产
-    reserved         real,       -- 公积金
-    reservedPerShare		    real,       -- 每股公积金
-    esp         real,       -- 每股收益
-    bvps		     real,		-- 每股净资
-    pb			     real, 		-- 市净率
-    timeToMarket      integer,		-- 上市日期
-    undp		    real,		-- 未分配利润
-    perundp       real,		-- 每股未分配利润
-    rev         real,		-- 收入同比
-    profit      real,		-- 利润同比
-    gpr         real,       -- 毛利率
-    npr         real,       -- 净利润率
-    holders     integer,    -- 股东人数
+DROP TABLE IF EXISTS st_basics;
+CREATE TABLE st_basics (
+    id                  serial PRIMARY KEY,
+    code                text UNIQUE,-- 代码
+    name                text,		-- 名称
+    area                text,		-- 地区
+    industry            text,		-- 所属行业
+    pe                  real,		-- 市盈率
+    outstanding         real,		-- 流通股本（亿）
+    totals              real,		-- 总股本（亿）
+    totalAssets         real,		-- 总资产（万）
+    liquidAssets        real,		-- 流动资产
+    fixedAssets	        real,		-- 固定资产
+    reserved            real,       -- 公积金
+    reservedPerShare    real,       -- 每股公积金
+    esp                 real,       -- 每股收益
+    bvps                real,		-- 每股净资
+    pb                  real, 		-- 市净率
+    timeToMarket        integer,	-- 上市日期
+    undp                real,		-- 未分配利润
+    perundp             real,		-- 每股未分配利润
+    rev                 real,		-- 收入同比
+    profit              real,		-- 利润同比
+    gpr                 real,       -- 毛利率
+    npr                 real,       -- 净利润率
+    holders             integer,    -- 股东人数
 
     al   	boolean NOT NULL DEFAULT true,
     sh		boolean NOT NULL DEFAULT false,
@@ -178,7 +178,7 @@ CREATE TABLE st_info (
     zxg   boolean NOT NULL DEFAULT false,
     ccg   boolean NOT NULL DEFAULT false
 ) WITH (OIDS=FALSE);
-CREATE INDEX ix_st_info_code 	ON st_info USING btree (code);
+CREATE INDEX ix_st_basics_code 	ON st_basics USING btree (code);
 
 
 -----------------------------------------------------------------

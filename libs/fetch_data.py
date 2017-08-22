@@ -79,12 +79,12 @@ def get_ts_hist_data(codes=[], start='2017-07-01'):
 '''
 
 
-def fetch_to_st_info():
+def fetch_stock_basics_to_st_basics():
 	print('Fetching stock basic info...')
 	time.clock()
 	df = ts.get_stock_basics()
 	print('Fetched data sucess! time=[%s]' % (time.clock()))
-	fn.save_df(df, 'st_info');
+	fn.save_df(df, 'st_basics');
 	return
 
 
@@ -161,4 +161,4 @@ if __name__ == '__main__':
 
 #	renew_ts_today_all()
 
-	fetch_to_st_info()
+	fetch_stock_basics_to_st_basics()
