@@ -69,7 +69,8 @@ def fetchcol(sql, i=0):
 	return [r[i] for r in fetchall(sql)]
 
 def fetchval(sql, i=0):
-	return fetchone(sql)[i]
+	r = fetchone(sql)
+	return (None,) if r is None else r[i]
 
 
 

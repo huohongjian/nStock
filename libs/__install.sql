@@ -52,39 +52,40 @@ CREATE INDEX ix_st_k_data_bott ON st_k_data USING btree (bott);
 
 
 
-DROP TABLE IF EXISTS ts_hist_data;
-DROP SEQUENCE IF EXISTS ts_hist_data_seq;
-CREATE SEQUENCE ts_hist_data_seq;
-CREATE TABLE ts_hist_data
+DROP TABLE IF EXISTS st_hist_data;
+DROP SEQUENCE IF EXISTS st_hist_data_seq;
+CREATE SEQUENCE st_hist_data_seq;
+CREATE TABLE st_hist_data
 (
-    id   		bigint NOT NULL DEFAULT nextval('ts_hist_data_seq') PRIMARY KEY,
+    id   		bigint NOT NULL DEFAULT nextval('st_hist_data_seq') PRIMARY KEY,
     date 		date,
     code 		text,
     open 		double precision,
-    close 	double precision,
-    high 		double precision,
-    low 		double precision,
-    yest		double precision,
-    pc 			double precision,
-    pcr 		double precision,
-    volume double precision,
-    amount double precision,
-    m5 		double precision,
-    m10 	double precision,
-    m20 	double precision,
-    v5 		double precision,
-    v10 	double precision,
-    v20 	double precision,
-    turnover double precision,
-    qfq 	double precision,
-    hfq 	double precision,
-    peak 	integer NOT NULL DEFAULT -1,
-    bott 	integer NOT NULL DEFAULT -1
+    close           double precision,
+    high            double precision,
+    low             double precision,
+    yest            double precision,
+    price_change    double precision,
+    p_change 		double precision,
+    volume          double precision,
+    amount          double precision,
+    ma5             double precision,
+    ma10            double precision,
+    ma20            double precision,
+    v_ma5           double precision,
+    v_ma10          double precision,
+    v_ma20          double precision,
+    turnover        double precision,
+    qfq             double precision,
+    hfq             double precision,
+    peak            integer NOT NULL DEFAULT -1,
+    bott            integer NOT NULL DEFAULT -1,
+    CONSTRAINT  code_date UNIQUE (code, date) 
 ) WITH (OIDS=FALSE);
-CREATE INDEX ix_ts_hist_data_code 	ON ts_hist_data USING btree (code);
-CREATE INDEX ix_ts_hist_data_date 	ON ts_hist_data USING btree (code);
-CREATE INDEX ix_ts_hist_data_peak 	ON ts_hist_data USING btree (peak);
-CREATE INDEX ix_ts_hist_data_bott 	ON ts_hist_data USING btree (bott);
+--CREATE INDEX ix_st_hist_data_code 	ON st_hist_data USING btree (code);
+CREATE INDEX ix_st_hist_data_date 	ON st_hist_data USING btree (code);
+CREATE INDEX ix_st_hist_data_peak 	ON st_hist_data USING btree (peak);
+CREATE INDEX ix_st_hist_data_bott 	ON st_hist_data USING btree (bott);
 
 
 ----------------------------------------------------------------
@@ -135,7 +136,7 @@ CREATE INDEX ix_data_realtime_time ON data_realtime USING btree (time);
 CREATE INDEX ix_data_realtime_code ON data_realtime USING btree (code);
 */
 ----------------------------------------------------------------
-
+/*
 DROP TABLE IF EXISTS st_basics;
 CREATE TABLE st_basics (
     id                  serial PRIMARY KEY,
@@ -180,7 +181,7 @@ CREATE TABLE st_basics (
 ) WITH (OIDS=FALSE);
 CREATE INDEX ix_st_basics_code 	ON st_basics USING btree (code);
 
-
+*/
 -----------------------------------------------------------------
 /*
 DROP TABLE IF EXISTS profit;

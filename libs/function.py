@@ -5,15 +5,14 @@
 import datetime
 import tushare 	as ts
 import pandas 	as pd
-import numpy 		as np
-
+import numpy 	as np
 from tqdm import tqdm, trange
 
 import db
 
 
-def write_log(dowork='', remark=''):
-	sql = "INSERT INTO st_log (dowork, remark) VALUES ('%s', '%s')" % (dowork, remark)
+def write_log(dowork='', remark='ok'):
+	sql = "INSERT INTO st_log (dowork, remark) VALUES ('{}', '{}')".format(dowork, remark)
 	return db.execute(sql)
 
 
@@ -99,8 +98,6 @@ def save_df(df, tablename, mode='upsert'):
 			bar.set_description("Saving cached data [{}].".format(saveTimes))
 			db.execute(SQL)
 			SQL = ''
-		if(i==lines-1):
-			bar.set_description("This task is done!")
 	return True
 
 

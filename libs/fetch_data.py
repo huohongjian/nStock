@@ -11,7 +11,7 @@ import pandas 	as pd
 
 import db
 import function as fn
-
+from tqdm import tqdm, trange
 
 
 
@@ -85,12 +85,43 @@ def fetch_stock_basics_to_st_basics():
 	df = ts.get_stock_basics()
 	print('Fetched data sucess! time=[%s]' % (time.clock()))
 	fn.save_df(df, 'st_basics');
-	return
+	fn.write_log(dowork='fetch_stock_basics_to_st_basics')
 
 
 
+def fetch_hist_data_to_st_hist_data(codes, start_date='2016-01-01'):
+	if codes is None:
+		codes = db.fetchcol("SELECT code FROM st_basics")
+		if codes is None:
+			print('Please input stock stocks.')
+			return False
 
+	stime1 = datetime.datetime.now()
+	last_code = codes[-1]
+	DF = pd.DataFrame()
+	pbar = tqdm(codes)
+	for code in pbar:
+		stime = datetime.datetime.now()
+		fetched_day = db.fetchval("SELECT date FROM st_hist_data WHERE code='{}' ORDER BY date DESC LIMIT 1".format(code))
+		if fetched_day is not None:
+			start_date = str(fn.next_trade_day(fetched_day))
+		
+		df = ts.get_hist_data(code, start=start_date)
+		pbar.set_description("Fetching data [{}]. Time={}".format(code, datetime.datetime.now()-stime))
+		
+		if not df.empty:
+			df['code'] = code
+			DF = pd.concat([DF, df])
 
+		if(DF.shape[0]>5000 or code==last_code):
+			print('Saving cached data...', end='\r')		
+			DF.to_sql('st_hist_data', db.ENGINE, if_exists='append')
+			DF = pd.DataFrame()
+			print('Saving cached data... is done!')
+			if(code==last_code):
+				pbar.set_description('This task is completed! Time={}'.format(datetime.datetime.now()-stime1))
+	
+	fn.write_log(dowork='fetch_hist_data_to_st_hist_data')	
 
 
 
@@ -161,4 +192,6 @@ if __name__ == '__main__':
 
 #	renew_ts_today_all()
 
-	fetch_stock_basics_to_st_basics()
+#	fetch_stock_basics_to_st_basics()
+
+	fetch_hist_data_to_st_hist_data()
